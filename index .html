@@ -1,0 +1,1529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0c12">
+<meta name="description" content="Book Vault — your personal offline audio library for books and scripts.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Book Vault — Audio Library</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" href="icons/icon-192.png">
+<style>
+:root{
+  --bg:#0a0c12; --bg2:#10131c; --card:#161a26; --card2:#1f2534;
+  --line:rgba(255,255,255,.08); --txt:#eef0f8; --dim:#9aa1bd;
+  --acc:#2e5bff; --acc2:#e3b860; --ok:#35c28f; --danger:#e0314b;
+  --radius:16px; --shadow:0 10px 30px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+  background:radial-gradient(1200px 600px at 80% -10%,rgba(46,91,255,.16),transparent 60%),
+             radial-gradient(900px 500px at -10% 110%,rgba(227,184,96,.07),transparent 60%),var(--bg);
+  color:var(--txt); min-height:100dvh; padding-bottom:110px;
+}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+input,select{font:inherit}
+img{max-width:100%}
+
+/* ---------- header ---------- */
+header{
+  position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;
+  padding:14px 20px;background:rgba(15,18,32,.8);backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);
+}
+.logo{display:flex;align-items:center;gap:10px;min-width:0}
+.logo svg{flex:none}
+.logo h1{font-size:1.15rem;font-weight:700;letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.logo span{display:block;font-size:.7rem;color:var(--dim);font-weight:400;letter-spacing:.6px;text-transform:uppercase}
+header .spacer{flex:1}
+.btn{
+  display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:12px;
+  font-weight:600;font-size:.9rem;transition:.15s;white-space:nowrap;
+}
+.btn-primary{background:linear-gradient(135deg,var(--acc),#1d43c0);box-shadow:0 4px 18px rgba(46,91,255,.35)}
+.btn-primary:hover{filter:brightness(1.12)}
+.btn-ghost{border:1px solid var(--line);color:var(--dim)}
+.btn-ghost:hover{color:var(--txt);border-color:var(--acc)}
+#installBtn{display:none}
+
+/* ---------- toolbar ---------- */
+.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:18px 20px 6px;max-width:1100px;margin:0 auto}
+.search{
+  flex:1;min-width:200px;display:flex;align-items:center;gap:10px;
+  background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;
+}
+.search input{flex:1;background:none;border:none;outline:none;color:var(--txt)}
+.search input::placeholder{color:var(--dim)}
+.chips{display:flex;gap:8px}
+.chip{padding:8px 14px;border-radius:999px;border:1px solid var(--line);color:var(--dim);font-size:.85rem;font-weight:600}
+.chip.active{background:var(--acc);border-color:var(--acc);color:#fff}
+
+/* ---------- grid ---------- */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;padding:18px 20px;max-width:1100px;margin:0 auto}
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  overflow:hidden;transition:.2s;display:flex;flex-direction:column;
+}
+.card:hover{transform:translateY(-3px);border-color:rgba(46,91,255,.55);box-shadow:var(--shadow)}
+.cover{
+  height:130px;display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer;
+}
+.cover .initials{font-size:2.6rem;font-weight:800;color:rgba(255,255,255,.9);text-shadow:0 2px 12px rgba(0,0,0,.4);letter-spacing:2px}
+.cover .badge{
+  position:absolute;top:10px;right:10px;font-size:.68rem;font-weight:700;letter-spacing:.5px;
+  padding:4px 9px;border-radius:999px;background:rgba(0,0,0,.45);backdrop-filter:blur(6px);
+}
+.badge.done{background:rgba(53,194,143,.22);color:var(--ok)}
+.card-body{padding:14px;display:flex;flex-direction:column;gap:8px;flex:1}
+.card-body h3{font-size:1rem;font-weight:700;line-height:1.3}
+.card-body .author{font-size:.82rem;color:var(--dim)}
+.progress-track{height:5px;background:rgba(255,255,255,.08);border-radius:99px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,#4a74ff,var(--acc2));border-radius:99px;transition:width .3s}
+.meta-row{display:flex;justify-content:space-between;font-size:.75rem;color:var(--dim)}
+.card-actions{display:flex;gap:6px;margin-top:auto;padding-top:6px}
+.icon-btn{
+  flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:8px;border-radius:10px;
+  background:var(--card2);font-size:.8rem;font-weight:600;color:var(--dim);transition:.15s;
+}
+.icon-btn:hover{color:var(--txt);background:rgba(46,91,255,.25)}
+.icon-btn.play{background:linear-gradient(135deg,var(--acc),#1d43c0);color:#fff}
+.icon-btn.danger:hover{background:rgba(224,49,75,.22);color:var(--danger)}
+
+/* ---------- empty state ---------- */
+.empty{max-width:1100px;margin:40px auto;text-align:center;padding:30px 20px;color:var(--dim)}
+.empty .big{font-size:3.5rem;margin-bottom:12px}
+.empty h2{color:var(--txt);margin-bottom:8px}
+.empty p{margin-bottom:18px;font-size:.92rem}
+
+/* ---------- player ---------- */
+.player{
+  position:fixed;left:0;right:0;bottom:0;z-index:30;
+  background:rgba(23,27,46,.92);backdrop-filter:blur(16px);
+  border-top:1px solid var(--line);padding:12px 20px calc(12px + env(safe-area-inset-bottom));
+  display:none;flex-direction:column;gap:8px;
+}
+.player.on{display:flex}
+.player .row{display:flex;align-items:center;gap:14px;max-width:1100px;margin:0 auto;width:100%}
+.player .info{min-width:0;flex:1}
+.player .info b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.92rem}
+.player .info span{font-size:.75rem;color:var(--dim)}
+.player-btn{
+  width:46px;height:46px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,var(--acc),#1d43c0);box-shadow:0 4px 16px rgba(46,91,255,.4);
+}
+.player-btn.small{width:38px;height:38px;background:var(--card2);box-shadow:none}
+.player-btn svg{fill:#fff}
+.player input[type=range]{width:140px}
+#seek{flex:1}
+input[type=range]{-webkit-appearance:none;appearance:none;height:5px;border-radius:99px;background:rgba(255,255,255,.15);outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:var(--acc2);cursor:pointer}
+.time{font-size:.75rem;color:var(--dim);font-variant-numeric:tabular-nums;flex:none}
+
+/* ---------- modal ---------- */
+.overlay{
+  position:fixed;inset:0;z-index:50;background:rgba(5,7,15,.7);backdrop-filter:blur(6px);
+  display:none;align-items:center;justify-content:center;padding:20px;
+}
+.overlay.on{display:flex}
+.modal{
+  background:var(--bg2);border:1px solid var(--line);border-radius:20px;width:100%;max-width:460px;
+  padding:24px;box-shadow:var(--shadow);max-height:90dvh;overflow-y:auto;
+}
+.modal h2{font-size:1.2rem;margin-bottom:18px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:.8rem;font-weight:600;color:var(--dim);margin-bottom:6px}
+.field input[type=text]{width:100%;padding:11px 14px;border-radius:11px;border:1px solid var(--line);background:var(--card);color:var(--txt);outline:none}
+.field input[type=text]:focus{border-color:var(--acc)}
+.file-drop{
+  border:2px dashed var(--line);border-radius:12px;padding:18px;text-align:center;color:var(--dim);
+  font-size:.85rem;cursor:pointer;transition:.15s;
+}
+.file-drop:hover,.file-drop.drag{border-color:var(--acc);color:var(--txt);background:rgba(46,91,255,.10)}
+.file-drop .name{color:var(--acc2);font-weight:600;display:block;margin-top:6px;word-break:break-all}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+
+/* ---------- toast ---------- */
+#toast{
+  position:fixed;bottom:120px;left:50%;transform:translateX(-50%) translateY(20px);z-index:99;
+  background:var(--card2);border:1px solid var(--line);padding:11px 20px;border-radius:12px;
+  font-size:.88rem;opacity:0;pointer-events:none;transition:.25s;box-shadow:var(--shadow);max-width:90vw;
+}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ---------- covers ---------- */
+.cover img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;z-index:1}
+.badge{z-index:2}
+
+/* ---------- player extras ---------- */
+.player-btn.small.tts-on{background:linear-gradient(135deg,var(--acc2),#b8902e)}
+.sleep-note{font-size:.72rem;color:var(--acc2);font-weight:700;margin-left:auto;white-space:nowrap}
+
+/* ---------- bookmark modal ---------- */
+.bm-list{display:flex;flex-direction:column;gap:8px;margin-top:12px;max-height:40dvh;overflow-y:auto}
+.bm-item{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:.88rem;cursor:pointer}
+.bm-item:hover{border-color:var(--acc)}
+.bm-item .t{color:var(--acc2);font-variant-numeric:tabular-nums;font-weight:700;flex:none}
+.bm-item .del{margin-left:auto;color:var(--dim);flex:none;padding:2px 6px}
+.bm-item .del:hover{color:var(--danger)}
+.bm-empty{color:var(--dim);font-size:.85rem;text-align:center;padding:14px 0}
+
+/* ---------- script textarea ---------- */
+textarea.script{
+  width:100%;min-height:120px;padding:11px 14px;border-radius:11px;border:1px solid var(--line);
+  background:var(--card);color:var(--txt);outline:none;font:inherit;resize:vertical;
+}
+textarea.script:focus{border-color:var(--acc)}
+
+/* ---------- light theme ---------- */
+body[data-theme="light"]{
+  --bg:#f4f5fb; --bg2:#ffffff; --card:#ffffff; --card2:#eceef8;
+  --line:rgba(15,18,32,.10); --txt:#1d2338; --dim:#5d6480;
+  --shadow:0 10px 30px rgba(30,40,90,.12);
+}
+body[data-theme="light"] header{background:rgba(244,245,251,.85)}
+body[data-theme="light"] .player{background:rgba(255,255,255,.92)}
+
+/* ---------- stats & sort ---------- */
+.stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:18px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center}
+.stat b{display:block;font-size:1.5rem;color:var(--acc)}
+.stat span{font-size:.72rem;color:var(--dim);text-transform:uppercase;letter-spacing:.5px}
+.sort{padding:9px 12px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--txt);outline:none;font-size:.85rem;cursor:pointer}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+
+/* ---------- auth & account ---------- */
+.auth-tabs{display:flex;gap:8px;margin-bottom:16px}
+.auth-tabs .chip{flex:1;text-align:center}
+#userChip{display:none;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);font-size:.85rem;font-weight:600;cursor:pointer}
+#userChip.on{display:inline-flex}
+#userChip:hover{border-color:var(--acc)}
+
+/* ---------- adult / 18+ ---------- */
+.hidden-blur .cover img,.hidden-blur .cover .initials{filter:blur(16px) saturate(.7)}
+.hidden-blur .cover{background:#2a2a3a!important}
+.adult-badge{position:absolute;top:10px;left:10px;z-index:2;background:rgba(248,113,113,.92);color:#fff;font-size:.66rem;font-weight:800;padding:4px 8px;border-radius:999px;letter-spacing:.5px}
+.hidden-flag{opacity:.5}
+
+/* ---------- create-new format selector ---------- */
+.type-row{display:flex;gap:8px;flex-wrap:wrap}
+.type-opt{flex:1;min-width:100px;padding:10px 8px;border:1px solid var(--line);border-radius:12px;text-align:center;font-size:.8rem;font-weight:700;cursor:pointer;color:var(--dim)}
+.type-opt.sel{border-color:var(--acc);color:var(--txt);background:rgba(46,91,255,.18)}
+
+/* ---------- video overlay ---------- */
+#mediaWrap{position:fixed;inset:0;z-index:40;background:rgba(5,7,15,.93);display:none;align-items:center;justify-content:center;padding:20px}
+#mediaWrap.on{display:flex}
+#mediaWrap video{max-width:100%;max-height:72dvh;border-radius:14px;background:#000}
+#mediaClose{position:absolute;top:18px;right:18px}
+
+/* ---------- universal media viewer & link import ---------- */
+#mediaStage{display:none;align-items:center;justify-content:center;max-width:92vw}
+#mediaStage img{max-width:88vw;max-height:70dvh;border-radius:14px;object-fit:contain}
+#mediaStage iframe{width:min(860px,92vw);height:min(70dvh,640px);border:none;border-radius:14px;background:#fff}
+#linkConverted{color:var(--acc2);font-weight:600;font-size:.78rem;word-break:break-all;margin-top:6px;min-height:1em}
+
+/* ---------- tags, help & goals ---------- */
+.tags-row{display:flex;gap:6px;flex-wrap:wrap}
+.tag-chip{font-size:.68rem;padding:3px 9px;border-radius:999px;background:var(--card2);color:var(--dim);font-weight:700;cursor:pointer}
+.tag-chip:hover{color:var(--txt);border:1px solid var(--acc)}
+.help-item{display:flex;gap:10px;align-items:center;padding:8px 0;font-size:.88rem;border-bottom:1px solid var(--line)}
+.help-item:last-child{border-bottom:none}
+.help-item .t{color:var(--acc2);font-variant-numeric:tabular-nums;font-weight:700;flex:none;min-width:70px}
+
+/* ---------- external link mode ---------- */
+.player.ext .player-btn:not(#openLinkBtn):not(#stopBtn){opacity:.35;pointer-events:none}
+.player.ext input[type=range]{opacity:.35;pointer-events:none}
+.player.ext .sleep-note{color:var(--dim);font-weight:400}
+
+@media (max-width:560px){
+  header{padding:12px 14px}
+  .toolbar{padding:14px 14px 4px}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;padding:14px}
+  .cover{height:100px}
+  .cover .initials{font-size:1.9rem}
+  .btn .btn-label-wide{display:none}
+  .player input[type=range]{width:90px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <svg width="34" height="34" viewBox="0 0 34 34" fill="none" aria-hidden="true">
+      <rect x="3" y="4" width="24" height="26" rx="4" fill="url(#g1)"/>
+      <path d="M7 9h11M7 14h11M7 19h7" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+      <path d="M27 12v10" stroke="#e3b860" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M31 9v16" stroke="#e3b860" stroke-width="2.5" stroke-linecap="round" opacity=".55"/>
+      <defs><linearGradient id="g1" x1="3" y1="4" x2="27" y2="30"><stop stop-color="#2e5bff"/><stop offset="1" stop-color="#1d43c0"/></linearGradient></defs>
+    </svg>
+    <h1>Book Vault<span>Audio Library</span></h1>
+  </div>
+  <div class="spacer"></div>
+  <button id="importLinkBtn" class="btn btn-ghost" title="Import from a link or cloud storage">☁️<span class="btn-label-wide">&nbsp;Import</span></button>
+  <button id="userChip" title="Account">👤 <span id="userName">…</span></button>
+  <button id="statsBtn" class="btn btn-ghost" aria-label="Statistics, backup and data" title="Stats · Backup · Data">📊<span class="btn-label-wide">&nbsp;Stats</span></button>
+  <button id="themeBtn" class="btn btn-ghost" aria-label="Toggle light or dark theme" title="Theme">🌙</button>
+  <button id="helpBtn" class="btn btn-ghost" title="Shortcuts & help" aria-label="Shortcuts and help">⌨️</button>
+  <button id="installBtn" class="btn btn-ghost">⬇ Install app</button>
+  <button id="addBtn" class="btn btn-primary">＋ <span class="btn-label-wide">Add book</span></button>
+</header>
+
+<div class="toolbar">
+  <div class="search">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9aa1bd" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input id="search" type="text" placeholder="Search title or author…" autocomplete="off">
+  </div>
+  <div class="chips" id="chips">
+    <button class="chip active" data-f="all">All</button>
+    <button class="chip" data-f="progress">In progress</button>
+    <button class="chip" data-f="done">Finished</button>
+  </div>
+  <select id="sort" class="sort" aria-label="Sort books">
+    <option value="recent">Recently added</option>
+    <option value="title">Title A–Z</option>
+    <option value="author">Author A–Z</option>
+    <option value="progress">Progress</option>
+    <option value="listened">Most listened</option>
+  </select>
+  <button id="shuffleBtn" class="chip" title="Play a random book" aria-label="Play a random book">🎲</button>
+</div>
+<div class="toolbar" style="padding-top:2px">
+  <div class="chips" id="catChips" style="flex-wrap:wrap"></div>
+</div>
+
+<main>
+  <div id="continueRail" style="display:none;max-width:1100px;margin:14px auto 0;padding:0 20px">
+    <h2 style="font-size:.95rem;margin-bottom:8px;color:var(--dim)">▶ Continue listening</h2>
+    <div class="chips" id="railChips" style="flex-wrap:wrap"></div>
+  </div>
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty" style="display:none">
+    <div class="big">📚</div>
+    <h2>Your vault is empty</h2>
+    <p>Add a book and attach its audio file (MP3, M4A, WAV…).<br>Everything is stored on your device and works offline.</p>
+    <button class="btn btn-primary" onclick="openAdd()">＋ Add your first book</button>
+  </div>
+</main>
+
+<div class="player" id="player">
+  <div class="row">
+    <button class="player-btn small" id="prevBtn" title="Previous in queue" style="font-size:.8rem">⏮</button>
+    <button class="player-btn small" id="back15" title="Back 15s"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z"/></svg></button>
+    <button class="player-btn" id="playPause" title="Play / pause">
+      <svg id="icPlay" width="20" height="20" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      <svg id="icPause" width="20" height="20" viewBox="0 0 24 24" style="display:none"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+    </button>
+    <button class="player-btn small" id="fwd30" title="Forward 30s"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M12 5V1l5 5-5 5V7a6 6 0 1 0 6 6h2a8 8 0 1 1-8-8z"/></svg></button>
+    <button class="player-btn small" id="nextBtn" title="Next in queue" style="font-size:.8rem">⏭</button>
+    <div class="info"><b id="pTitle">—</b><span id="pAuthor">—</span></div>
+    <span class="time" id="tCur">0:00</span>
+    <input type="range" id="seek" min="0" max="1000" value="0" step="1">
+    <span class="time" id="tDur">0:00</span>
+    <button class="player-btn small" id="speedBtn" title="Playback speed" style="font-size:.72rem;font-weight:700;color:var(--txt)">1×</button>
+    <button class="player-btn small" id="openLinkBtn" title="Open a pasted link (YouTube, embeds, direct files)" style="font-size:.85rem">🔗</button>
+    <button class="player-btn small" id="bmBtn" title="Add bookmark at current position"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></svg></button>
+    <button class="player-btn small" id="sleepBtn" title="Sleep timer"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10h-2a8 8 0 1 1-8-8z"/><path d="M12 7v5l3.5 2" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg></button>
+    <button class="player-btn small" id="ttsBtn" title="Read script aloud (Web Speech)"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M3 10v4h4l5 5V5L7 10H3z"/><path d="M16 8a5 5 0 0 1 0 8" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg></button>
+    <button class="player-btn small" id="listBtn" title="Bookmarks list"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg></button>
+    <button class="player-btn small" id="shareBtn" title="Share this book"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M18 16a3 3 0 0 0-2.2 1L9 13.5a3 3 0 0 0 0-1l6.8-3.5A3 3 0 1 0 15 7a3 3 0 0 0 .1.7L8.3 11a3 3 0 1 0 0 3.9l6.8 3.4A3 3 0 1 0 18 16z"/></svg></button>
+    <button class="player-btn small" id="volBtn" title="Volume" style="font-size:.9rem">🔊</button>
+    <input type="range" id="vol" min="0" max="100" value="100" title="Volume" style="width:70px">
+    <button class="player-btn small" id="stopBtn" title="Stop / close"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg></button>
+    <span class="sleep-note" id="sleepNote"></span>
+  </div>
+</div>
+
+<div class="overlay" id="modalOverlay">
+  <div class="modal">
+    <h2 id="modalTitle">Add a book</h2>
+    <div class="field"><label>Format</label>
+      <div class="type-row" id="typeRow">
+        <div class="type-opt sel" data-t="audio" title="Upload a narrated audio file">🎧 Audio book</div>
+        <div class="type-opt" data-t="ascript" title="Paste text and have it read aloud">🗣 Audio script</div>
+        <div class="type-opt" data-t="vscript" title="Attach a video plus its script">🎬 Video script</div>
+      </div>
+    </div>
+    <div class="field"><label for="fTitle">Title *</label><input type="text" id="fTitle" maxlength="120" placeholder="e.g. The Hobbit"></div>
+    <div class="field"><label for="fAuthor">Author</label><input type="text" id="fAuthor" maxlength="80" placeholder="e.g. J.R.R. Tolkien"></div>
+    <div class="field"><label for="fCat">Category</label>
+      <select id="fCat" class="sort" style="width:100%">
+        <option value="">Uncategorized</option>
+        <option>Fiction</option><option>Non-fiction</option><option>Fantasy</option>
+        <option>Sci-Fi</option><option>Romance</option><option>Mystery / Thriller</option>
+        <option>Self-Help</option><option>Horror</option><option>Biography</option>
+        <option>Educational</option><option>Poetry</option><option>Screenplay</option>
+        <option>Erotic (18+)</option>
+      </select>
+    </div>
+    <div class="field" id="audioField">
+      <label>Audio file</label>
+      <div class="file-drop" id="drop" tabindex="0">
+        🎧 Tap to choose or drop an audio file here
+        <span class="name" id="fileName"></span>
+      </div>
+      <input type="file" id="fAudio" accept="audio/*" hidden>
+    </div>
+    <div class="field" id="videoField" style="display:none">
+      <label>Video file</label>
+      <div class="file-drop" id="dropV" tabindex="0">
+        🎬 Tap to choose or drop a video file here
+        <span class="name" id="videoName"></span>
+      </div>
+      <input type="file" id="fVideo" accept="video/*" hidden>
+    </div>
+    <div class="field">
+      <label>Material file (PDF / TXT — optional)</label>
+      <div class="file-drop" id="dropM" tabindex="0">
+        📄 Tap to choose a PDF or text file
+        <span class="name" id="matName"></span>
+      </div>
+      <input type="file" id="fMat" accept="application/pdf,text/plain,.pdf,.txt" hidden>
+    </div>
+    <div class="field">
+      <label>Find scripts &amp; content online</label>
+      <button type="button" class="btn btn-ghost" id="gSearch" style="width:100%;justify-content:center">🔎 Quick-search Google for scripts, images &amp; video</button>
+      <p style="font-size:.72rem;color:var(--dim);margin-top:6px">Opens google.com/search in a new tab (Google blocks embedding). Download what you find, then attach it above.</p>
+    </div>
+    <div class="field">
+      <label>Cover image (optional)</label>
+      <div class="file-drop" id="coverDrop" tabindex="0">
+        🖼 Tap to choose a cover image
+        <span class="name" id="coverName"></span>
+      </div>
+      <input type="file" id="fCover" accept="image/*" hidden>
+    </div>
+    <div class="field">
+      <label for="fScript">Script text (audio scripts: read-aloud · video scripts: screenplay/source text)</label>
+      <textarea class="script" id="fScript" placeholder="Paste the book / script text here… then hit 🗣 in the player to hear it read aloud."></textarea>
+    </div>
+    <div class="field">
+      <label for="fNotes">Notes / thoughts (private, stays on device)</label>
+      <textarea class="script" id="fNotes" style="min-height:70px" placeholder="Where you left off, key ideas, quotes…"></textarea>
+    </div>
+    <div class="field"><label for="fTags">Tags (comma separated — tap a #tag on any card to filter)</label>
+      <input type="text" id="fTags" maxlength="200" placeholder="reread, favorites, beach-list"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="cancelBtn">Cancel</button>
+      <button class="btn btn-primary" id="saveBtn">Save to vault</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="bmOverlay">
+  <div class="modal">
+    <h2>🔖 Bookmarks</h2>
+    <div class="bm-list" id="bmList"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="bmClose">Close</button>
+      <button class="btn btn-primary" id="bmAdd">＋ Bookmark now</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="statsOverlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Statistics, backup and data">
+    <h2>📊 Your reading stats</h2>
+    <div class="stats-grid" id="statsGrid"></div>
+    <h2 style="font-size:1rem;margin-bottom:8px">💾 Backup &amp; data</h2>
+    <p style="font-size:.82rem;color:var(--dim);margin-bottom:12px">Export packs every book — metadata, scripts, covers <b>and audio</b> — into one JSON file you can re-import on any device.</p>
+    <div class="modal-actions" style="justify-content:flex-start;margin-top:0">
+      <button class="btn btn-primary" id="exportBtn">⬇ Export backup</button>
+      <button class="btn btn-ghost" id="importBtn">⬆ Import backup</button>
+      <input type="file" id="fImport" accept="application/json,.json" hidden>
+    </div>
+    <h2 style="font-size:1rem;margin:18px 0 8px">👤 Account</h2>
+    <p id="acctInfo" style="font-size:.82rem;color:var(--dim);margin-bottom:10px"></p>
+    <div class="field" style="margin-bottom:12px"><label for="goalInput">Daily listening goal (minutes)</label>
+      <input type="text" id="goalInput" class="sort" inputmode="numeric" style="width:110px" value="30"></div>
+    <label style="display:flex;gap:8px;align-items:center;font-size:.85rem;margin-bottom:12px"><input type="checkbox" id="adultToggle"> Show Erotic / 18+ content (18-confirmed accounts only)</label>
+    <div class="modal-actions" style="justify-content:flex-start"><button class="btn btn-ghost" id="logoutBtn">🚪 Log out</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="openLinkOverlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Open a pasted link">
+    <h2>🔗 Open a pasted link</h2>
+    <div class="field"><label for="pasteUrl">Paste any video/audio link — YouTube, Vimeo, Dailymotion, xvideos, xnxx, xhamster, direct file URLs (.mp4/.mp3/.m3u8…)</label>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="pasteUrl" placeholder="https://…" autocomplete="off" style="flex:1;padding:11px 14px;border-radius:11px;border:1px solid var(--line);background:var(--card);color:var(--txt);outline:none">
+        <button class="btn btn-ghost" id="pasteBtn" title="Paste from clipboard">📋</button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="openLinkClose">Close</button>
+      <button class="btn btn-ghost" id="openLinkTab">↗ New tab</button>
+      <button class="btn btn-primary" id="openLinkGo">▶ Open</button>
+    </div>
+    <p style="font-size:.74rem;color:var(--dim);margin-top:10px">Routed automatically: YouTube/Vimeo/Dailymotion and sites with public embeds (xvideos, xnxx, xhamster) play in an embedded player; direct files (.mp4/.mp3/.m3u8…) play in the native player; anything else opens in a new tab. Embedded players don't run the custom speed/bookmark controls.</p>
+    <div id="recentLinksWrap" style="margin-top:10px"></div>
+  </div>
+</div>
+
+<div class="overlay" id="helpOverlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Help and shortcuts">
+    <h2>⌨️ Shortcuts &amp; help</h2>
+    <div>
+      <div class="help-item"><span class="t">Space</span> Play / pause</div>
+      <div class="help-item"><span class="t">← / →</span> Skip 15s back / 30s forward</div>
+      <div class="help-item"><span class="t">/</span> Focus search</div>
+      <div class="help-item"><span class="t">L</span> Open a pasted link</div>
+      <div class="help-item"><span class="t">?</span> This help</div>
+      <div class="help-item"><span class="t">Esc</span> Close any dialog</div>
+    </div>
+    <p style="font-size:.78rem;color:var(--dim);margin-top:10px">Everything is stored on this device, per account. Use 📊 → Export backup to move your vault — including audio and video — to another device.</p>
+    <div class="modal-actions"><button class="btn btn-primary" id="helpClose">Got it</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="linkOverlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Import from a link">
+    <h2>☁️ Import from a link</h2>
+    <div class="field"><label for="linkUrl">Share link — Google Drive, Dropbox, OneDrive, or any direct file URL</label>
+      <input type="text" id="linkUrl" placeholder="https://drive.google.com/file/d/…/view" autocomplete="off">
+      <p id="linkConverted"></p>
+    </div>
+    <div class="field"><label for="linkTitle">Title for the imported item</label><input type="text" id="linkTitle" maxlength="120" placeholder="Imported item"></div>
+    <div class="field"><label for="fCat2">Category</label>
+      <select id="fCat2" class="sort" style="width:100%">
+        <option value="">Uncategorized</option>
+        <option>Fiction</option><option>Non-fiction</option><option>Fantasy</option>
+        <option>Sci-Fi</option><option>Romance</option><option>Mystery / Thriller</option>
+        <option>Self-Help</option><option>Horror</option><option>Biography</option>
+        <option>Educational</option><option>Poetry</option><option>Screenplay</option>
+        <option>Erotic (18+)</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="linkCancel">Close</button>
+      <button class="btn btn-ghost" id="linkOpen">↗ Open link</button>
+      <button class="btn btn-primary" id="linkFetch">⬇ Fetch into vault</button>
+    </div>
+    <h2 style="font-size:1rem;margin:16px 0 8px">Open your cloud storage (upload / download there)</h2>
+    <div class="type-row">
+      <a class="type-opt" href="https://drive.google.com/drive/u/0/my-drive" target="_blank" rel="noopener">🗄 Drive</a>
+      <a class="type-opt" href="https://photos.google.com/" target="_blank" rel="noopener">🖼 Photos*</a>
+      <a class="type-opt" href="https://onedrive.live.com/" target="_blank" rel="noopener">☁️ OneDrive</a>
+      <a class="type-opt" href="https://www.dropbox.com/home" target="_blank" rel="noopener">📦 Dropbox</a>
+    </div>
+    <p style="font-size:.72rem;color:var(--dim);margin-top:8px">*Google Photos share links cannot be direct-downloaded — save the file there first, then attach it. Drive, Dropbox and OneDrive share links are auto-converted to direct downloads above. If a host blocks direct downloads (CORS), use ↗ Open link, download there, then attach the file locally.</p>
+    <details style="margin-top:10px">
+      <summary style="cursor:pointer;font-size:.85rem;color:var(--dim)">Advanced: your own API keys for in-app cloud pickers (optional)</summary>
+      <div class="field" style="margin-top:8px"><label for="apiKeys">Google Picker client ID / Dropbox app key (comma separated)</label>
+        <input type="text" id="apiKeys" autocomplete="off" placeholder="xxxx.apps.googleusercontent.com, dropbox-app-key"></div>
+      <button class="btn btn-ghost" id="saveKeys">Save keys</button>
+      <p id="keysState" style="font-size:.72rem;color:var(--dim);margin-top:6px"></p>
+      <div class="modal-actions" style="justify-content:flex-start;margin-top:10px">
+        <button class="btn btn-ghost" id="gpickerBtn">🗂 Google Picker</button>
+        <button class="btn btn-ghost" id="dbxBtn">📦 Dropbox chooser</button>
+      </div>
+    </details>
+  </div>
+</div>
+
+<div class="overlay on" id="authOverlay" style="z-index:100">
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Sign in">
+    <h2 style="text-align:center">🔐 Sign in to your Vault</h2>
+    <div class="auth-tabs">
+      <button class="chip active" id="tabLogin">Log in</button>
+      <button class="chip" id="tabReg">Register</button>
+    </div>
+    <div class="field" id="nameField" style="display:none"><label for="aName">Display name</label><input type="text" id="aName" maxlength="60" placeholder="How we greet you"></div>
+    <div class="field"><label for="aEmail">Email or username</label><input type="text" id="aEmail" autocomplete="username" placeholder="you@example.com"></div>
+    <div class="field"><label for="aPass">Password</label><input type="password" id="aPass" autocomplete="current-password" placeholder="min. 4 characters"></div>
+    <div class="field" id="ageField" style="display:none">
+      <label style="display:flex;gap:8px;align-items:flex-start;font-weight:400;color:var(--txt);font-size:.85rem">
+        <input type="checkbox" id="aAdult" style="margin-top:2px">
+        <span>I confirm I am 18+ and want access to the Erotic (18+) category. Optional — you can browse everything else without it.</span>
+      </label>
+    </div>
+    <p style="font-size:.74rem;color:var(--dim);margin-top:10px">Accounts live on this device only; passwords are hashed with SHA-256 before storage. This is <b>not</b> server-side authentication — treat it as a privacy screen, not real security.</p>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="authGo">Log in</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<div id="mediaWrap">
+  <button class="btn btn-ghost" id="mediaClose">✕ Close viewer</button>
+  <video id="audio" playsinline preload="metadata" controls></video>
+  <div id="mediaStage"></div>
+</div>
+
+<script>
+'use strict';
+/* ================= state (user-scoped) ================= */
+const LS_USERS='bv_users_v1', LS_SESSION='bv_session_v1', LS_THEME='bv_theme_v1', LS_SORT='bv_sort_v1';
+const $=id=>document.getElementById(id);
+const audio=$('audio');
+let session={user:null};
+let books=[], filter='all', query='', tagFilter='', pendingFile=null, pendingCover=null, editingId=null;
+const booksKey=()=>'bv_books_v1::'+(session.user?session.user.id:'guest');
+const save=()=>{if(session.user)localStorage.setItem(booksKey(),JSON.stringify(books));};
+function loadUserBooks(){
+  if(!localStorage.getItem(booksKey())&&localStorage.getItem('bv_books_v1')){
+    localStorage.setItem(booksKey(),localStorage.getItem('bv_books_v1')); // carry pre-accounts data into the first account only
+    localStorage.removeItem('bv_books_v1');
+  }
+  try{
+    const arr=JSON.parse(localStorage.getItem(booksKey())||'[]');
+    const out=arr.map(b=>Object.assign({author:'',duration:0,progress:0,done:false,audioName:'',bookmarks:[],listened:0,hasCover:false,hasScript:false,notes:'',cat:'',type:'audio',adult:false,hasMat:false},b));
+    if(JSON.stringify(out)!==JSON.stringify(arr))localStorage.setItem(booksKey(),JSON.stringify(out));
+    books=out;
+  }catch(_){books=[];}
+}
+const showAdult=()=>!!(session.user&&session.user.adult&&$('adultToggle').checked);
+
+/* ================= accounts (device-local, SHA-256 hashed) ================= */
+async function hash(s){const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('bv$'+s));return [...new Uint8Array(d)].map(x=>x.toString(16).padStart(2,'0')).join('');}
+function users(){try{return JSON.parse(localStorage.getItem(LS_USERS)||'{}');}catch(_){return{};}}
+function putUsers(u){localStorage.setItem(LS_USERS,JSON.stringify(u));}
+let authMode='login';
+function setAuthMode(m){authMode=m;$('tabLogin').classList.toggle('active',m==='login');$('tabReg').classList.toggle('active',m==='reg');$('nameField').style.display=m==='reg'?'block':'none';$('ageField').style.display=m==='reg'?'block':'none';$('authGo').textContent=m==='reg'?'Create account':'Log in';}
+$('tabLogin').onclick=()=>setAuthMode('login');
+$('tabReg').onclick=()=>setAuthMode('reg');
+$('authGo').onclick=async()=>{
+  const id=$('aEmail').value.trim().toLowerCase(),p=$('aPass').value;
+  if(!id||p.length<4)return toast('⚠ Username and a password of 4+ characters are required');
+  const us=users();
+  if(authMode==='reg'){
+    if(us[id])return toast('⚠ That account already exists — log in instead');
+    us[id]={id,pw:await hash(p),name:$('aName').value.trim()||id.split('@')[0],adult:!!$('aAdult').checked,created:Date.now()};
+    putUsers(us);toast('✅ Account created');login(us[id]);
+  }else{
+    const u=us[id];
+    if(!u||u.pw!==await hash(p))return toast('⚠ Wrong username or password');
+    login(u);
+  }
+};
+function login(u){
+  session.user=u;localStorage.setItem(LS_SESSION,u.id);
+  $('authOverlay').classList.remove('on');
+  $('userChip').classList.add('on');$('userName').textContent=u.name;
+  $('adultToggle').checked=localStorage.getItem('bv_adult_optin')==='1'; // restore 18+ opt-in across reloads
+  loadUserBooks();
+  currentId=localStorage.getItem('bv_current_v1::'+u.id)||null;
+  tagFilter='';cat='';renderCats();render();resumeBanner();
+  $('goalInput').value=localStorage.getItem('bv_goal::'+u.id)||30;
+  handleShortcutParams();
+}
+function handleShortcutParams(){
+  const qp=new URLSearchParams(location.search);
+  if(qp.get('add'))openAdd();
+  if(qp.get('stats'))setTimeout(()=>$('statsBtn').click(),80);
+  if(qp.get('import'))setTimeout(()=>$('importLinkBtn').click(),80);
+  const sh=qp.get('url')||qp.get('text');
+  if(sh&&sh!=='1'){$('linkUrl').value=sh;updateLink();$('linkOverlay').classList.add('on');}
+}
+function resumeBanner(){
+  const b=books.find(x=>x.id===currentId);
+  if(b){$('pTitle').textContent=b.title;$('pAuthor').textContent=b.author||'Unknown author';$('player').classList.add('on');}
+}
+
+/* ================= indexedDB (audio/video blobs) ================= */
+function openDB(){return new Promise((res,rej)=>{
+  const r=indexedDB.open('bookvault',1);
+  r.onupgradeneeded=()=>r.result.createObjectStore('audio');
+  r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);
+});}
+async function putBlob(key,val){const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction('audio','readwrite');tx.objectStore('audio').put(val,key);tx.oncomplete=res;tx.onerror=()=>rej(tx.error);});}
+async function getBlob(key){const db=await openDB();return new Promise((res,rej)=>{const req=db.transaction('audio').objectStore('audio').get(key);req.onsuccess=()=>res(req.result);req.onerror=()=>rej(req.error);});}
+async function delKey(key){const db=await openDB();return new Promise((res)=>{const tx=db.transaction('audio','readwrite');tx.objectStore('audio').delete(key);tx.oncomplete=res;});}
+const putAudio=(id,blob)=>putBlob(id,blob), getAudio=id=>getBlob(id), delAudio=id=>delKey(id);
+
+/* ================= helpers ================= */
+const fmt=s=>{s=Math.max(0,Math.floor(s||0));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;
+  return h?`${h}:${String(m).padStart(2,'0')}:${String(x).padStart(2,'0')}`:`${m}:${String(x).padStart(2,'0')}`;};
+const hue=t=>{let h=0;for(const c of (t||'bv'))h=(h*31+c.charCodeAt(0))%360;return h;};
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),2600);}
+const esc=s=>(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ================= render ================= */
+function render(){
+  const grid=$('grid');
+  const list=books
+    .filter(b=>filter==='all'||(filter==='done'?b.done:!b.done))
+    .filter(b=>!b.adult||showAdult()) // 18+ needs an 18-confirmed account AND the opt-in toggle
+    .filter(b=>!b.hidden)
+    .filter(b=>!tagFilter||(b.tags||[]).includes(tagFilter))
+    .filter(b=>!cat||b.cat===cat)
+    .filter(b=>!query||(b.title+' '+(b.author||'')+' '+(b.cat||'')).toLowerCase().includes(query))
+    .sort((a,b)=>{
+      if(sortBy==='title')return a.title.localeCompare(b.title);
+      if(sortBy==='author')return (a.author||'~').localeCompare(b.author||'~');
+      if(sortBy==='progress')return (b.progress/(b.duration||1))-(a.progress/(a.duration||1));
+      if(sortBy==='listened')return (b.listened||0)-(a.listened||0);
+      return b.created-a.created;
+    });
+  grid.innerHTML=list.map(b=>{
+    const h=hue(b.title), pct=b.duration?Math.min(100,(b.progress/b.duration)*100):0;
+    const init=(b.title||'?').split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+    return `<article class="card" data-id="${b.id}">
+      <div class="cover ${b.adult&&!showAdult()?'hidden-blur':''}" style="background:linear-gradient(135deg,hsl(${h},45%,32%),hsl(${(h+50)%360},55%,22%))" data-play="${b.id}">
+        <span class="initials">${esc(init)}</span>
+        ${b.adult?'<span class="adult-badge">18+</span>':''}
+        <span class="badge ${b.done?'done':''}">${b.done?'✓ Finished':'▶ '+fmt(b.duration||0)}</span>
+      </div>
+      <div class="card-body">
+        <h3>${esc(b.title)}</h3>
+        <div class="author">${esc(b.author||'Unknown author')}${b.cat?' · '+esc(b.cat):''}${b.type==='vscript'?' · 🎬':b.type==='ascript'?' · 🗣':''}</div>
+        ${(b.tags&&b.tags.length)?`<div class="tags-row">${b.tags.map(t=>`<button class="tag-chip" data-tag="${esc(t)}" title="Filter by #${esc(t)}">#${esc(t)}</button>`).join('')}</div>`:''}
+        <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+        <div class="meta-row"><span>${b.notes?'📝 ':''}${fmt(b.progress||0)} / ${fmt(b.duration||0)}</span><span>${b.audioName?esc(b.audioName.slice(0,18)):''}</span></div>
+        <div class="card-actions">
+          <button class="icon-btn play" data-play="${b.id}" aria-label="Play ${esc(b.title)}">▶ Play</button>
+          <button class="icon-btn" data-edit="${b.id}" aria-label="Edit ${esc(b.title)}">✎</button>
+          <button class="icon-btn" data-dl="${b.id}" aria-label="Download audio of ${esc(b.title)}" title="Save audio file">⬇</button>
+          ${b.hasMat?`<button class="icon-btn" data-mat="${b.id}" title="Open material (PDF/TXT)">📄</button>`:''}
+          ${b.adult?`<button class="icon-btn" data-hide="${b.id}" title="Hide this book (re-enable via ✎)">🙈</button>`:''}
+          <button class="icon-btn danger" data-del="${b.id}" aria-label="Delete ${esc(b.title)}">🗑</button>
+        </div>
+      </div>
+    </article>`;}).join('');
+  $('empty').style.display=books.length?'none':'block';
+  renderRail();renderCats();loadCovers();
+}
+
+function renderRail(){
+  const rail=$('continueRail'),wrap=$('railChips');
+  const inProg=books.filter(b=>!b.hidden&&(!b.adult||showAdult())&&!b.done&&b.progress>0)
+    .sort((a,b)=>b.progress/(b.duration||1)-a.progress/(a.duration||1)).slice(0,4);
+  rail.style.display=inProg.length?'block':'none';
+  wrap.innerHTML=inProg.map(b=>{
+    const pct=b.duration?Math.round(b.progress/b.duration*100):0;
+    return `<button class="chip" data-play="${b.id}">${esc(b.title)} · ${pct}%</button>`;
+  }).join('');
+}
+
+function loadCovers(){
+  books.forEach(async b=>{
+    if(!b.hasCover)return;
+    const el=document.querySelector(`.card[data-id="${b.id}"] .cover`);
+    if(!el||el.querySelector('img'))return;
+    try{
+      const blob=await getBlob('cover-'+b.id);
+      if(!blob)return;
+      const img=document.createElement('img');
+      img.src=URL.createObjectURL(blob);img.alt='';
+      el.prepend(img);
+    }catch(_){}
+  });
+}
+
+document.addEventListener('click',e=>{
+  const p=e.target.closest('[data-play]'); if(p){playBook(p.dataset.play);return;}
+  const ed=e.target.closest('[data-edit]'); if(ed){openEdit(ed.dataset.edit);return;}
+  const dl2=e.target.closest('[data-dl]'); if(dl2){exportAudio(dl2.dataset.dl);return;}
+  const ddel=e.target.closest('[data-del]'); if(ddel){removeBook(ddel.dataset.del);return;}
+  const mt=e.target.closest('[data-mat]'); if(mt){openMaterial(mt.dataset.mat);return;}
+  const hd=e.target.closest('[data-hide]'); if(hd){const b=books.find(x=>x.id===hd.dataset.hide);if(b){b.hidden=true;save();render();toast('🙈 Hidden — edit the book (✎) and save to restore');}return;}
+  const tg=e.target.closest('[data-tag]'); if(tg){tagFilter=tagFilter===tg.dataset.tag?'':tg.dataset.tag;renderCats();render();toast(tagFilter?'🔎 Filtering by #'+tagFilter:'Tag filter cleared');}
+});
+
+/* ================= modal ================= */
+function openAdd(){if(window._sharedFile){pendingFile=window._sharedFile;}editingId=null;$('modalTitle').textContent='Add a book';$('fTitle').value='';$('fAuthor').value='';$('fScript').value='';$('fNotes').value='';$('fTags').value='';$('fCat').value='';pendingCover=null;pendingVideo=null;pendingMat=null;$('coverName').textContent='';$('videoName').textContent='';$('matName').textContent='';
+  if(pendingFile){$('fileName').textContent='📎 '+pendingFile.name;$('fTitle').value=$('fTitle').value||pendingFile.name.replace(/\.[^.]+$/,'');}else $('fileName').textContent='';
+  setType('audio');$('modalOverlay').classList.add('on');$('fTitle').focus();}
+function openEdit(id){
+  const b=books.find(x=>x.id===id);if(!b)return;
+  editingId=id;$('modalTitle').textContent='Edit book';$('fTitle').value=b.title;$('fAuthor').value=b.author||'';
+  pendingFile=null;pendingCover=null;$('fileName').textContent=b.audioName?' keeping: '+b.audioName:'';
+  $('coverName').textContent=b.hasCover?' keeping current cover':'';$('fScript').value='';$('fNotes').value=b.notes||'';$('fCat').value=b.cat||'';$('fTags').value=(b.tags||[]).join(', ');
+  pendingVideo=null;pendingMat=null;$('videoName').textContent='';$('matName').textContent=b.hasMat?' keeping: '+(b.matName||'material file'):'';
+  setType(b.type||'audio');
+  if(b.hasScript)getBlob('script-'+id).then(t=>{$('fScript').value=t?String(t):'';}).catch(()=>{});
+  $('modalOverlay').classList.add('on');
+}
+function closeModal(){$('modalOverlay').classList.remove('on');}
+$('addBtn').onclick=openAdd;
+$('cancelBtn').onclick=closeModal;
+$('modalOverlay').addEventListener('click',e=>{if(e.target.id==='modalOverlay')closeModal();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){$('bmOverlay').classList.remove('on');$('statsOverlay').classList.remove('on');$('linkOverlay').classList.remove('on');$('helpOverlay').classList.remove('on');closeModal();}});
+$('drop').onclick=()=>$('fAudio').click();
+$('drop').ondragover=e=>{e.preventDefault();$('drop').classList.add('drag');};
+$('drop').ondragleave=()=>$('drop').classList.remove('drag');
+$('drop').ondrop=e=>{e.preventDefault();$('drop').classList.remove('drag');pickFile(e.dataTransfer.files[0]);};
+$('fAudio').onchange=e=>pickFile(e.target.files[0]);
+$('coverDrop').onclick=()=>$('fCover').click();
+$('fCover').onchange=e=>{const f=e.target.files[0];if(!f)return;if(!f.type.startsWith('image')){toast('⚠ Not an image file');return;}pendingCover=f;$('coverName').textContent='🖼 '+f.name;};
+
+/* create-new: format selector, video & material pickers, google quick-search */
+let newType='audio',pendingVideo=null,pendingMat=null;
+function setType(t){
+  newType=t;
+  document.querySelectorAll('#typeRow .type-opt').forEach(x=>x.classList.toggle('sel',x.dataset.t===t));
+  $('audioField').style.display=t==='audio'?'block':'none';
+  $('videoField').style.display=t==='vscript'?'block':'none';
+}
+$('typeRow').addEventListener('click',e=>{const o=e.target.closest('.type-opt');if(o)setType(o.dataset.t);});
+$('dropV').onclick=()=>$('fVideo').click();
+$('dropV').ondragover=e=>{e.preventDefault();$('dropV').classList.add('drag');};
+$('dropV').ondragleave=()=>$('dropV').classList.remove('drag');
+$('dropV').ondrop=e=>{e.preventDefault();$('dropV').classList.remove('drag');const f=e.dataTransfer.files[0];if(f&&f.type.startsWith('video')){pendingVideo=f;$('videoName').textContent='🎬 '+f.name;}};
+$('fVideo').onchange=e=>{const f=e.target.files[0];if(!f)return;if(!f.type.startsWith('video')){toast('⚠ Not a video file');return;}pendingVideo=f;$('videoName').textContent='🎬 '+f.name;};
+$('dropM').onclick=()=>$('fMat').click();
+$('fMat').onchange=e=>{const f=e.target.files[0];if(!f)return;pendingMat=f;$('matName').textContent='📄 '+f.name;};
+$('gSearch').onclick=()=>{const q=window.prompt('Search Google for scripts, books, images or video:');if(q&&q.trim())window.open('https://www.google.com/search?q='+encodeURIComponent(q.trim()),'_blank','noopener');};
+function pickFile(f){if(!f)return;if(!f.type.startsWith('audio')&&!/\.(mp3|m4a|wav|ogg|aac|flac|opus|webm)$/i.test(f.name)){toast('⚠ Not an audio file');return;}pendingFile=f;$('fileName').textContent='🎧 '+f.name;}
+
+$('saveBtn').onclick=async()=>{
+  const title=$('fTitle').value.trim();
+  if(!title){toast('⚠ Title is required');$('fTitle').focus();return;}
+  let b;
+  if(editingId){
+    b=books.find(x=>x.id===editingId);
+    b.title=title;b.author=$('fAuthor').value.trim();
+    if(pendingFile)await attachAudio(b,pendingFile);
+  }else{
+    if(books.some(x=>x.title.toLowerCase()===title.toLowerCase())&&
+       !confirm('“'+title+'” is already in your vault. Add it anyway?'))return;
+    b={id:crypto.randomUUID?crypto.randomUUID():'b'+Date.now()+Math.random(),title,author:$('fAuthor').value.trim(),created:Date.now(),duration:0,progress:0,done:false,audioName:'',bookmarks:[],listened:0,hasCover:false,hasScript:false,notes:''};
+    if(pendingFile)await attachAudio(b,pendingFile);
+    books.push(b);
+  }
+  if(pendingCover){await putBlob('cover-'+b.id,pendingCover);b.hasCover=true;}
+  const st=$('fScript').value.trim();
+  if(st){await putBlob('script-'+b.id,st);b.hasScript=true;}
+  else if(b.hasScript){await delKey('script-'+b.id);b.hasScript=false;}
+  b.notes=$('fNotes').value.trim();
+  b.tags=$('fTags').value.split(',').map(s=>s.trim()).filter(Boolean).slice(0,10);
+  b.hidden=false; // editing a book clears a previous hide
+  b.cat=$('fCat').value;b.type=newType;b.adult=b.cat==='Erotic (18+)';
+  if(b.adult&&!session.user.adult)return toast('🔒 The Erotic (18+) category needs an 18-confirmed account');
+  if(pendingVideo&&newType==='vscript'){await putBlob('video-'+b.id,pendingVideo);b.videoName=pendingVideo.name;if(!b.duration)b.duration=await readDuration(pendingVideo);}
+  if(pendingMat){await putBlob('material-'+b.id,pendingMat);b.hasMat=true;b.matName=pendingMat.name;}
+  save();render();closeModal();toast(editingId?'✓ Updated':'📚 Added to vault');
+};
+
+async function openMaterial(id){
+  try{
+    const mb=await getBlob('material-'+id);
+    if(!mb)return toast('⚠ Material missing — re-add via ✎');
+    window.open(URL.createObjectURL(mb),'_blank');
+  }catch(_){toast('⚠ Could not open material');}
+}
+
+async function exportAudio(id){
+  const b=books.find(x=>x.id===id);if(!b)return;
+  try{
+    const blob=await getBlob(id);
+    if(!blob)return toast('⚠ No audio stored for this book');
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);a.download=b.audioName||b.title+'.mp3';a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+  }catch(_){toast('⚠ Could not export audio');}
+}
+async function openMaterial(id){
+  try{
+    const mb=await getBlob('material-'+id);
+    if(!mb)return toast('⚠ Material missing — re-add via ✎');
+    window.open(URL.createObjectURL(mb),'_blank');
+  }catch(_){toast('⚠ Could not open material');}
+}
+async function attachAudio(b,file){
+  b.audioName=file.name;
+  await putAudio(b.id,file);
+  b.duration=await readDuration(file);
+}
+function readDuration(file){return new Promise(res=>{
+  const a=document.createElement(file&&file.type&&file.type.startsWith('video')?'video':'audio'),u=URL.createObjectURL(file);
+  a.preload='metadata';a.src=u;
+  a.onloadedmetadata=()=>{res(a.duration||0);URL.revokeObjectURL(u);};
+  a.onerror=()=>{res(0);URL.revokeObjectURL(u);};
+  setTimeout(()=>res(0),4000);
+});}
+
+function removeBook(id){
+  const b=books.find(x=>x.id===id);if(!b)return;
+  if(!confirm(`Delete “${b.title}” and its audio?`))return;
+  if(currentId===id)stop();
+  delKey('cover-'+id);delKey('script-'+id);delKey('material-'+id);delKey('video-'+id);delAudio(id);
+  books=books.filter(x=>x.id!==id);save();render();toast('🗑 Deleted');
+}
+
+/* ================= player ================= */
+let currentId=null;
+const curKey=()=>'bv_current_v1::'+(session.user?session.user.id:'guest');
+const SPEEDS=[1,1.25,1.5,1.75,2,0.75];let spIdx=0;
+function probe(){const b=books.find(x=>x.id===currentId);return b||null;}
+async function playBook(id){
+  if(typeof tts!=='undefined'&&tts.on)ttsStop(true);
+  const b=books.find(x=>x.id===id);if(!b)return;
+  if(b.adult&&!showAdult())return toast('🔒 18+ content — it stays hidden until enabled in 📊 Stats → Account');
+  hideStage();$('player').classList.remove('ext');$('sleepNote').textContent=sleepEnd?`⏱ ${SLEEP_OPTS[sleepIdx]} min`:'';
+  const isVideo=b.type==='vscript';
+  let blob=null;
+  if(isVideo){blob=await getBlob('video-'+id).catch(()=>null);}
+  else{blob=await getBlob(id).catch(()=>null);}
+  if(!blob){toast(isVideo?'⚠ Video missing — re-add via ✎':'⚠ Audio missing — re-add the file via ✎');return;}
+  if(isVideo){
+    audio.pause();
+    $('mediaWrap').classList.add('on');
+    if(audio.src)URL.revokeObjectURL(audio.src);
+    audio.src=URL.createObjectURL(blob);
+  }else{
+    $('mediaWrap').classList.remove('on');
+    if(audio.src)URL.revokeObjectURL(audio.src);
+    audio.src=URL.createObjectURL(blob);
+  }
+  currentId=id;localStorage.setItem(curKey(),id);
+  $('pTitle').textContent=b.title;$('pAuthor').textContent=(b.author||'Unknown author')+(isVideo?' · 🎬 video script':'');
+  $('player').classList.add('on');
+  audio.onloadedmetadata=()=>{
+    if(b.duration&&Math.abs(b.duration-audio.duration)<3)b.duration=audio.duration;
+    else b.duration=audio.duration||b.duration;
+    audio.currentTime=Math.min(b.progress||0,audio.duration-1>0?audio.duration-1:0);
+    save();render();
+  };
+  try{await audio.play();}catch(_){/* autoplay guard — user presses play */}
+}
+audio.onplay=()=>{
+  $('icPlay').style.display='none';$('icPause').style.display='block';
+  reqWakeLock();
+  const b=probe();
+  if('mediaSession' in navigator&&b){
+    try{navigator.mediaSession.metadata=new MediaMetadata({title:b.title,artist:b.author||'Unknown author',album:'Book Vault'});}
+    catch(_){/* older browsers */}
+  }
+};
+audio.onpause=()=>{$('icPlay').style.display='block';$('icPause').style.display='none';releaseWakeLock();save();};
+audio.ontimeupdate=()=>{
+  if(!audio.duration)return;
+  $('seek').value=Math.round(audio.currentTime/audio.duration*1000);
+  $('tCur').textContent=fmt(audio.currentTime);$('tDur').textContent=fmt(audio.duration);
+  const b=probe();if(!b)return;
+  const d=(b._lt!==undefined&&audio.currentTime>b._lt)?(audio.currentTime-b._lt):0;
+  if(d>0){b.listened=(b.listened||0)+d;addListenSec(d);}
+  b._lt=audio.currentTime;
+  b.progress=audio.currentTime;b.duration=audio.duration;
+  if(!b._lastSave||Date.now()-b._lastSave>2000){save();b._lastSave=Date.now();
+    const fill=document.querySelector(`.card[data-id="${b.id}"] .progress-fill`);if(fill)fill.style.width=(b.progress/b.duration*100)+'%';}
+};
+audio.onended=()=>{const b=probe();if(b){b.done=true;b.progress=b.duration;save();render();}toast('🎉 Finished!');if(autoNext&&queue.length>1)queueStep(1);};
+$('playPause').onclick=()=>{
+  if(tts.on){speechSynthesis.paused?speechSynthesis.resume():speechSynthesis.pause();return;}
+  if(!audio.src){const b=probe();if(b)playBook(b.id);else if(books[0])playBook(books[0].id);return;}
+  audio.paused?audio.play():audio.pause();
+};
+$('seek').oninput=()=>{if(audio.duration)audio.currentTime=$('seek').value/1000*audio.duration;};
+$('back15').onclick=()=>audio.currentTime=Math.max(0,audio.currentTime-15);
+$('fwd30').onclick=()=>audio.currentTime=Math.min(audio.duration||1e9,audio.currentTime+30);
+$('speedBtn').onclick=()=>{spIdx=(spIdx+1)%SPEEDS.length;audio.playbackRate=SPEEDS[spIdx];$('speedBtn').textContent=SPEEDS[spIdx]+'×';};
+function stop(){ttsStop();audio.pause();releaseWakeLock();$('mediaWrap').classList.remove('on');$('player').classList.remove('ext');$('sleepNote').textContent='';hideStage();audio.removeAttribute('src');$('player').classList.remove('on');currentId=null;localStorage.removeItem(curKey());}
+$('stopBtn').onclick=stop;
+
+/* ================= wake lock (keep screen on while listening) ================= */
+let wakeLock=null;
+async function reqWakeLock(){
+  try{if('wakeLock' in navigator&&!wakeLock){wakeLock=await navigator.wakeLock.request('screen');wakeLock.addEventListener('release',()=>wakeLock=null);}}catch(_){/* denied or unsupported */}
+}
+function releaseWakeLock(){if(wakeLock){try{wakeLock.release();}catch(_){}wakeLock=null;}}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&!audio.paused)reqWakeLock();});
+
+/* ================= volume ================= */
+const LS_VOL='bv_vol_v1';
+$('vol').value=localStorage.getItem(LS_VOL)||100;
+audio.volume=($('vol').value/100)||1;
+$('vol').oninput=e=>{audio.volume=e.target.value/100;localStorage.setItem(LS_VOL,e.target.value);$('volBtn').textContent=audio.volume==0?'🔇':audio.volume<0.5?'🔉':'🔊';};
+$('volBtn').onclick=()=>{$('vol').value=audio.volume==0?100:0;$('vol').oninput({target:$('vol')});};
+
+/* ================= shuffle ================= */
+$('shuffleBtn').onclick=()=>{
+  const pool=books.filter(b=>b.audioName&&!b.done);
+  const src=pool.length?pool:books;
+  if(!src.length)return toast('⚠ Nothing to shuffle yet');
+  const pick=src[Math.floor(Math.random()*src.length)];
+  toast('🎲 '+pick.title);playBook(pick.id);
+  window.scrollTo({top:0,behavior:'smooth'});
+};
+
+/* ================= share ================= */
+$('shareBtn').onclick=async()=>{
+  const b=probe();if(!b)return toast('⚠ Nothing playing');
+  const pct=b.duration?Math.round((b.progress/b.duration)*100):0;
+  const text=`📖 ${b.title}${b.author?' — '+b.author:''} · ${pct}% through · via Book Vault`;
+  if(navigator.share){try{await navigator.share({title:b.title,text});}catch(_){/* user cancelled */}}
+  else if(navigator.clipboard){try{await navigator.clipboard.writeText(text);toast('📋 Copied to clipboard');}catch(_){toast('⚠ Sharing not supported');}}
+  else toast('⚠ Sharing not supported');
+};
+
+/* ================= bookmarks ================= */
+let bmBookId=null;
+$('bmBtn').onclick=()=>{const b=probe();if(!b)return toast('⚠ Nothing playing');bmBookId=b.id;renderBms();$('bmOverlay').classList.add('on');};
+$('listBtn').onclick=()=>$('bmBtn').click();
+$('bmClose').onclick=()=>$('bmOverlay').classList.remove('on');
+$('bmOverlay').addEventListener('click',e=>{if(e.target.id==='bmOverlay')e.target.classList.remove('on');});
+$('bmAdd').onclick=()=>{
+  const b=books.find(x=>x.id===bmBookId);if(!b)return;
+  b.bookmarks=b.bookmarks||[];
+  const t=tts.on&&tts.book?Math.floor(tts.book.progress||0):Math.floor(audio.currentTime||0);
+  b.bookmarks.push({t,label:'Bookmark '+(b.bookmarks.length+1)});
+  b.bookmarks.sort((x,y)=>x.t-y.t);
+  save();renderBms();toast('🔖 Bookmark added');
+};
+function renderBms(){
+  const b=books.find(x=>x.id===bmBookId),list=$('bmList');
+  if(!b||!b.bookmarks||!b.bookmarks.length){list.innerHTML='<div class="bm-empty">No bookmarks yet — tap ＋ to pin the current position.</div>';return;}
+  list.innerHTML=b.bookmarks.map((bm,i)=>`<div class="bm-item" data-bt="${bm.t}"><span class="t">${fmt(bm.t)}</span><span>${esc(bm.label||'Bookmark')}</span><button class="del" data-bd="${i}" title="Delete">✕</button></div>`).join('');
+}
+$('bmList').addEventListener('click',e=>{
+  const d=e.target.closest('[data-bd]');
+  if(d){const b=books.find(x=>x.id===bmBookId);if(b){b.bookmarks.splice(+d.dataset.bd,1);save();renderBms();}return;}
+  const it=e.target.closest('[data-bt]');
+  if(it){seekTo(+it.dataset.bt);$('bmOverlay').classList.remove('on');}
+});
+function seekTo(t){
+  if(tts.on&&tts.book&&tts.book.duration){
+    const total=tts.sents.reduce((a,s)=>a+s.length,0);
+    ttsSpeakFromChar(Math.floor(t/tts.book.duration*total));
+    if(speechSynthesis.paused)speechSynthesis.resume();
+    return;
+  }
+  if(audio.duration){audio.currentTime=Math.min(t,Math.max(0,audio.duration-1));audio.play();}
+}
+
+/* ================= sleep timer ================= */
+const SLEEP_OPTS=[0,5,10,15,30,45,60];let sleepIdx=0,sleepEnd=0;
+$('sleepBtn').onclick=()=>{sleepIdx=(sleepIdx+1)%SLEEP_OPTS.length;applySleep();};
+function applySleep(){
+  const m=SLEEP_OPTS[sleepIdx];
+  sleepEnd=m?Date.now()+m*60000:0;
+  $('sleepNote').textContent=m?`⏱ ${m} min`:'';
+  toast(m?`⏱ Sleep timer set: ${m} min`:'⏱ Sleep timer off');
+}
+setInterval(()=>{
+  if(sleepEnd&&Date.now()>=sleepEnd){
+    sleepEnd=0;$('sleepNote').textContent='';
+    audio.pause();
+    if('speechSynthesis' in window)speechSynthesis.pause();
+    toast('😴 Sleep timer — playback paused');
+  }
+},1000);
+
+/* ================= Web Speech read-aloud ================= */
+let tts={on:false,book:null,sents:[],idx:0,charStart:0};
+$('ttsBtn').onclick=async()=>{
+  const b=probe();
+  if(!b)return toast('⚠ Select a book first');
+  if(tts.on&&tts.book&&tts.book.id===b.id){ttsStop();return;}
+  if(!b.hasScript)return toast('⚠ No script saved — add text via ✎ on the card');
+  const txt=await getBlob('script-'+b.id);
+  if(!txt)return toast('⚠ Script missing — re-save it via ✎');
+  audio.pause();
+  tts.book=b;
+  tts.sents=String(txt).match(/[^.!?…]+[.!?…]+|\S[^.!?…]*$/g)||[String(txt)];
+  tts.on=true;$('ttsBtn').classList.add('tts-on');
+  $('pTitle').textContent=b.title;$('pAuthor').textContent='🗣 Reading script (Web Speech)';
+  $('player').classList.add('on');
+  ttsSpeakFromChar(Math.floor(b.progress||0));
+  toast('🗣 Reading aloud — tap ⏸ to pause');
+};
+function ttsSpeakFromChar(charPos){
+  let acc=0,i=0;
+  for(;i<tts.sents.length;i++){if(acc+tts.sents[i].length>=charPos)break;acc+=tts.sents[i].length;}
+  tts.idx=i;tts.charStart=acc;
+  speakNext();
+}
+function speakNext(){
+  if(!tts.on)return;
+  if(tts.idx>=tts.sents.length){
+    const b=tts.book;ttsStop();
+    if(b){b.done=true;save();render();}
+    toast('🎉 Script finished');
+    return;
+  }
+  const u=new SpeechSynthesisUtterance(tts.sents[tts.idx]);
+  u.rate=parseFloat($('speedBtn').textContent)||1;
+  u.onend=()=>{
+    if(!tts.on)return;
+    const now=Date.now();
+    if(tts._last&&now-tts._last<120000)addListenSec((now-tts._last)/1000);
+    tts._last=now;
+    tts.charStart+=tts.sents[tts.idx].length;tts.idx++;
+    if(tts.book){
+      tts.book.progress=tts.charStart;
+      if(Date.now()-(tts.book._ts||0)>2000){save();tts.book._ts=Date.now();}
+    }
+    speakNext();
+  };
+  speechSynthesis.speak(u);
+}
+function ttsStop(silent){
+  tts.on=false;
+  try{speechSynthesis.cancel();}catch(_){}
+  $('ttsBtn').classList.remove('tts-on');
+  const b=tts.book;
+  if(b&&!silent){$('pTitle').textContent=b.title;$('pAuthor').textContent=b.author||'Unknown author';}
+  tts.book=null;
+}
+document.addEventListener('keydown',e=>{
+  if(e.target&&e.target.matches&&e.target.matches('input,textarea,select'))return;
+  if(e.code==='Space'){e.preventDefault();$('playPause').click();}
+  if(e.key==='ArrowLeft')$('back15').click();
+  if(e.key==='ArrowRight')$('fwd30').click();
+  if(e.key==='/'){e.preventDefault();$('search').focus();}
+  if(e.key==='?'){$('helpOverlay').classList.add('on');}
+  if(e.key==='l'||e.key==='L'){$('openLinkBtn').click();}
+});
+
+/* ================= media session (lock-screen / headphone controls) ================= */
+if('mediaSession' in navigator){
+  try{
+    navigator.mediaSession.setActionHandler('play',()=>audio.play());
+    navigator.mediaSession.setActionHandler('pause',()=>audio.pause());
+    navigator.mediaSession.setActionHandler('seekbackward',()=>$('back15').click());
+    navigator.mediaSession.setActionHandler('seekforward',()=>$('fwd30').click());
+    navigator.mediaSession.setActionHandler('stop',stop);
+  }catch(_){/* action unsupported on this browser */}
+}
+
+/* ================= categories ================= */
+let cat='';
+const CATALOG=['Fiction','Non-fiction','Fantasy','Sci-Fi','Romance','Mystery / Thriller','Self-Help','Horror','Biography','Educational','Poetry','Screenplay','Erotic (18+)'];
+function renderCats(){
+  const wrap=$('catChips');
+  const adultOK=showAdult();
+  const cats=[...new Set([...CATALOG,...books.map(b=>b.cat).filter(Boolean)])];
+  const full=[['',`All (${books.length})`],['nocat','Uncategorized']];
+  if(tagFilter)full.unshift(['__tag','🔎 #'+tagFilter+' ✕']);
+  full.push(...cats.map(c=>[c,c==='Erotic (18+)'&&!adultOK?c+' 🔒':c]));
+  wrap.innerHTML=full.map(([v,l])=>`<button class="chip ${cat===v?'active':''}" data-c="${esc(v)}">${esc(l)}</button>`).join('');
+}
+$('catChips').addEventListener('click',e=>{
+  const c=e.target.closest('[data-c]');if(!c)return;
+  const v=c.dataset.c;
+  if(v==='Erotic (18+)'&&!showAdult()){
+    if(!session.user)return toast('🔒 Log in first');
+    if(!session.user.adult)return toast('🔒 Your account is not 18-confirmed — re-register with the 18+ box ticked (per-account flag)');
+    if(!$('adultToggle').checked)return toast('🔒 Enable “Show Erotic / 18+ content” in 📊 Stats → Account first');
+  }
+  if(v==='__tag'){tagFilter='';renderCats();render();return;}
+  cat=cat===v?'':v;renderCats();render();
+});
+
+/* ================= account panel, logout, 18+ opt-in ================= */
+$('userChip').onclick=()=>$('statsBtn').click();
+$('adultToggle').onchange=()=>{localStorage.setItem('bv_adult_optin', $('adultToggle').checked?'1':'0');if(!showAdult())if(cat==='Erotic (18+)')cat='';render();};
+$('logoutBtn').onclick=()=>{
+  flushAct();audio.pause();ttsStop();
+  session.user=null;localStorage.removeItem(LS_SESSION);
+  $('userChip').classList.remove('on');
+  $('statsOverlay').classList.remove('on');
+  $('player').classList.remove('on');
+  books=[];cat='';render();
+  $('authOverlay').classList.add('on');setAuthMode('login');
+  toast('👋 Logged out — your vault stays saved to this account');
+};
+
+/* ================= search, sort & filters ================= */
+let sortBy=localStorage.getItem(LS_SORT)||'recent';
+$('sort').value=sortBy;
+$('sort').onchange=e=>{sortBy=e.target.value;localStorage.setItem(LS_SORT,sortBy);render();};
+$('search').oninput=e=>{query=e.target.value.trim().toLowerCase();render();};
+$('chips').addEventListener('click',e=>{
+  const c=e.target.closest('.chip');if(!c)return;
+  document.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));
+  c.classList.add('active');filter=c.dataset.f;render();
+});
+
+/* ================= stats & backup ================= */
+$('statsBtn').onclick=()=>{
+  flushAct();
+  const vis=books.filter(b=>!b.adult||showAdult());
+  const tot=vis.length,fin=vis.filter(b=>b.done).length;
+  const hrs=vis.reduce((a,b)=>a+(b.listened||0),0)/3600;
+  let act={};try{act=JSON.parse(localStorage.getItem(actKey())||'{}');}catch(_){}
+  const streak=streakOf(act);
+  const today=new Date().toISOString().slice(0,10);
+  const todayMin=Math.floor((act[today]||0)/60);
+  const goal=+$('goalInput').value||30;
+  $('statsGrid').innerHTML=`
+    <div class="stat"><b>${tot}</b><span>Books</span></div>
+    <div class="stat"><b>${fin}</b><span>Finished</span></div>
+    <div class="stat"><b>${tot-fin}</b><span>In progress</span></div>
+    <div class="stat"><b>${hrs.toFixed(1)}h</b><span>Time listened</span></div>
+    <div class="stat"><b>🔥 ${streak}</b><span>Day streak</span></div>
+    <div class="stat"><b>${todayMin}/${goal}</b><span>Today · min</span></div>`;
+  $('acctInfo').textContent=session.user?`Signed in as ${session.user.name} (${session.user.id}) — data is stored on this device only.`:'Not signed in.';
+  $('adultToggle').checked=localStorage.getItem('bv_adult_optin')==='1';
+  $('statsOverlay').classList.add('on');
+};
+$('goalInput').onchange=e=>{
+  const g=Math.max(1,Math.min(1440,parseInt(e.target.value)||30));
+  e.target.value=g;
+  if(session.user)localStorage.setItem('bv_goal::'+session.user.id,g);
+  $('statsBtn').click();
+};
+$('statsOverlay').addEventListener('click',e=>{if(e.target.id==='statsOverlay')e.target.classList.remove('on');});
+
+const blobToB64=b=>new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result);f.readAsDataURL(b);});
+$('exportBtn').onclick=async()=>{
+  toast('⏳ Packing backup…');
+  const data={app:'book-vault',version:3,user:session.user?session.user.id:'guest',exported:new Date().toISOString(),books,blobs:{}};
+  for(const b of books){
+    if(b.audioName){const v=await getBlob('audio-'+b.id)||await getBlob(b.id);if(v)data.blobs['audio-'+b.id]=await blobToB64(v);}
+    if(b.hasCover){const v=await getBlob('cover-'+b.id);if(v)data.blobs['cover-'+b.id]=await blobToB64(v);}
+    if(b.hasScript){const v=await getBlob('script-'+b.id);if(v)data.blobs['script-'+b.id]=String(v);}
+    if(b.hasMat){const v=await getBlob('material-'+b.id);if(v)data.blobs['material-'+b.id]=await blobToB64(v);}
+    if(b.type==='vscript'){const v=await getBlob('video-'+b.id);if(v)data.blobs['video-'+b.id]=await blobToB64(v);}
+  }
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(data)],{type:'application/json'}));
+  a.download='book-vault-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+  toast('⬇ Backup exported');
+};
+$('importBtn').onclick=()=>$('fImport').click();
+$('fImport').onchange=async e=>{
+  const f=e.target.files[0];if(!f)return;
+  try{
+    const data=JSON.parse(await f.text());
+    if(data.app!=='book-vault')throw new Error('bad file');
+    for(const nb of data.books){
+      const ex=books.find(x=>x.id===nb.id);
+      if(ex)Object.assign(ex,nb);else books.push(nb);
+      for(const[k,v]of Object.entries(data.blobs||{})){
+        if(!k.endsWith(nb.id))continue;
+        if(k.startsWith('script-'))await putBlob(k,v);
+        else await putBlob(k,await(await fetch(v)).blob());
+      }
+    }
+    save();render();$('statsOverlay').classList.remove('on');
+    toast('⬆ Backup imported — '+data.books.length+' book(s)');
+  }catch(_){toast('⚠ Invalid backup file');}
+  e.target.value='';
+};
+
+/* ================= theme ================= */
+function applyThemeIcon(){$('themeBtn').textContent=document.body.dataset.theme==='light'?'☀️':'🌙';}
+if(localStorage.getItem(LS_THEME)==='light')document.body.dataset.theme='light';
+applyThemeIcon();
+$('themeBtn').onclick=()=>{
+  const toLight=document.body.dataset.theme!=='light';
+  if(toLight)document.body.dataset.theme='light';else delete document.body.dataset.theme;
+  localStorage.setItem(LS_THEME,toLight?'light':'dark');
+  applyThemeIcon();
+  const meta=document.querySelector('meta[name=theme-color]');if(meta)meta.content=toLight?'#f4f5fb':'#0a0c12';
+};
+
+/* ================= open pasted link (router) ================= */
+function routeLink(u){
+  try{
+    // accept a full iframe embed code too
+    const em=u.match(/<iframe[^>]*src=["']([^"']+)["']/i);
+    if(em)u=em[1];
+    const url=new URL(u);
+    const h=url.hostname.replace(/^www\./,'');
+    const p=url.pathname;
+    let m;
+    if(h==='youtu.be')return{kind:'youtube',id:p.slice(1)};
+    if(h==='youtube.com'||h==='m.youtube.com'||h==='music.youtube.com'){
+      if(p==='/watch')return{kind:'youtube',id:url.searchParams.get('v')};
+      if(p.startsWith('/shorts/'))return{kind:'youtube',id:p.split('/')[2]};
+      if(p.startsWith('/embed/'))return{kind:'youtube',id:p.split('/')[2]};
+      if(p.startsWith('/playlist'))return{kind:'youtube',list:url.searchParams.get('list')};
+    }
+    if(h==='vimeo.com'){m=p.match(/\/(\d+)/);if(m)return{kind:'vimeo',id:m[1]};}
+    if(h==='dailymotion.com'){m=p.match(/\/video\/([a-z0-9]+)/i);if(m)return{kind:'dm',id:m[1]};}
+    if(h==='dai.ly')return{kind:'dm',id:p.slice(1)};
+    if(h==='xvideos.com'||h.endsWith('.xvideos.com')){m=p.match(/embedframe\/([a-z0-9_.-]+)/i)||p.match(/\/(?:video\.)?([a-z0-9_.-]+)\//i);if(m)return{kind:'xvideos',id:m[1]};}
+    if(h==='xnxx.com'||h.endsWith('.xnxx.com')){m=p.match(/embedframe\/([a-z0-9-]+)/i)||p.match(/\/video-([a-z0-9]+)/i);if(m)return{kind:'xnxx',id:m[1]};}
+    if(h==='xhamster.com'||h.endsWith('.xhamster.com')){m=p.match(/videos\/(.+?)(?:\/|$)/);if(m)return{kind:'xh',id:m[1]};}
+    if(/\.m3u8(\?|$)/i.test(p+url.search))return{kind:'hls',src:u};
+    if(/\.(mp4|webm|m4v|mov|mp3|ogg|m4a|wav|flac|opus)(\?|$)/i.test(p+url.search))return{kind:'native',src:u};
+    return{kind:'unknown',src:u};
+  }catch(_){return{kind:'invalid'};}
+}
+function embedSrcFor(r){
+  if(r.kind==='youtube')return r.list?'https://www.youtube.com/embed/videoseries?list='+encodeURIComponent(r.list):'https://www.youtube.com/embed/'+encodeURIComponent(r.id||'');
+  if(r.kind==='vimeo')return 'https://player.vimeo.com/video/'+encodeURIComponent(r.id);
+  if(r.kind==='dm')return 'https://www.dailymotion.com/embed/video/'+encodeURIComponent(r.id);
+  if(r.kind==='xvideos')return 'https://www.xvideos.com/embedframe/'+encodeURIComponent(r.id);
+  if(r.kind==='xnxx')return 'https://www.xnxx.com/embedframe/'+encodeURIComponent(r.id);
+  if(r.kind==='xh')return 'https://xhamster.com/embed/'+encodeURIComponent(r.id);
+  return null;
+}
+function recentKey(){return 'bv_recent_links::'+(session.user?session.user.id:'guest');}
+function getRecent(){try{return JSON.parse(localStorage.getItem(recentKey())||'[]');}catch(_){return[];}}
+function pushRecent(u){const r=getRecent().filter(x=>x!==u);r.unshift(u);localStorage.setItem(recentKey(),JSON.stringify(r.slice(0,5)));renderRecent();}
+function renderRecent(){
+  const r=getRecent(),w=$('recentLinksWrap');
+  if(!r.length){w.innerHTML='';return;}
+  w.innerHTML='<label style="font-size:.75rem;color:var(--dim)">Recent links</label><div class="chips" style="flex-wrap:wrap;margin-top:6px">'+r.map(u=>`<button class="chip" data-rlink="${esc(u)}" title="${esc(u)}">${esc(u.replace(/^https?:\/\//,'').slice(0,34))}…</button>`).join('')+'</div>';
+}
+$('openLinkBtn').onclick=()=>{$('pasteUrl').value='';renderRecent();$('openLinkOverlay').classList.add('on');setTimeout(()=>$('pasteUrl').focus(),60);};
+$('openLinkClose').onclick=()=>$('openLinkOverlay').classList.remove('on');
+$('openLinkOverlay').addEventListener('click',e=>{if(e.target.id==='openLinkOverlay')e.target.classList.remove('on');});
+$('pasteBtn').onclick=async()=>{
+  try{
+    if(!navigator.clipboard||!navigator.clipboard.readText)throw new Error('unsupported');
+    const t=await navigator.clipboard.readText();
+    if(t&&t.trim()){$('pasteUrl').value=t.trim();toast('📋 Pasted from clipboard');}
+    else toast('⚠ Clipboard is empty');
+  }catch(_){toast('⚠ Clipboard read blocked here — long-press the field and paste manually');$('pasteUrl').focus();}
+};
+$('recentLinksWrap').addEventListener('click',e=>{
+  const c=e.target.closest('[data-rlink]');
+  if(c){$('pasteUrl').value=c.dataset.rlink;$('openLinkGo').click();}
+});
+$('openLinkTab').onclick=()=>{
+  const u=$('pasteUrl').value.trim();
+  if(!u)return toast('⚠ Paste a link first');
+  window.open(u,'_blank','noopener');
+};
+$('openLinkGo').onclick=()=>{
+  const u=$('pasteUrl').value.trim();
+  if(!u)return toast('⚠ Paste a link first');
+  const r=routeLink(u);
+  if(r.kind==='invalid')return toast('⚠ That does not look like a valid URL');
+  pushRecent(u);
+  $('openLinkOverlay').classList.remove('on');
+  ttsStop();
+  audio.pause();
+  hideStage();
+  if(r.kind==='native'){
+    $('mediaWrap').classList.add('on');
+    audio.removeAttribute('src');
+    audio.src=r.src;
+    $('player').classList.remove('ext');
+    $('pTitle').textContent='External link';$('pAuthor').textContent=u.slice(0,60);
+    $('player').classList.add('on');
+    try{audio.play();}catch(_){}
+    return;
+  }
+  if(r.kind==='hls'){
+    $('mediaWrap').classList.add('on');
+    const v=$('audio');
+    $('player').classList.remove('ext');
+    $('pTitle').textContent='Live stream';$('pAuthor').textContent=u.slice(0,60);
+    $('player').classList.add('on');
+    if(v.canPlayType('application/vnd.apple.mpegurl')){v.src=r.src;try{v.play();}catch(_){}}
+    else{
+      loadScript('https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js').then(()=>{
+        const hls=new Hls();hls.loadSource(r.src);hls.attachMedia(v);hls.on(Hls.Events.MANIFEST_PARSED,()=>{try{v.play();}catch(_){}});
+      }).catch(()=>toast('⚠ Could not load the stream player — open in new tab instead'));
+    }
+    return;
+  }
+  const es=embedSrcFor(r);
+  if(es){
+    const f=document.createElement('iframe');
+    f.src=es;f.allow='autoplay; fullscreen; picture-in-picture; encrypted-media';f.allowFullscreen=true;f.title='Embedded player';
+    showStage(f);
+    $('player').classList.add('ext');
+    $('pTitle').textContent='Embedded player ('+r.kind+')';
+    $('pAuthor').textContent='Site controls only — custom controls disabled';
+    $('sleepNote').textContent='🔗 embed';
+    return;
+  }
+  toast('⚠ That site blocks embedding — opening in a new tab (X-Frame-Options)');
+  window.open(u,'_blank','noopener');
+};
+
+/* ================= viewer close & queue preference ================= */
+$('mediaClose').onclick=()=>{$('mediaWrap').classList.remove('on');hideStage();};
+let autoNext=localStorage.getItem('bv_autonext')!=='0';
+function setAutoNext(v){autoNext=v;localStorage.setItem('bv_autonext',v?'1':'0');updateAutoNextBtn();toast(v?'⏭ Auto-advance on':'⏭ Auto-advance off');}
+function updateAutoNextBtn(){const b=$('nextBtn');if(b)b.style.opacity=autoNext?'1':'.45';}
+updateAutoNextBtn();
+$('nextBtn').addEventListener('dblclick',()=>setAutoNext(!autoNext));
+
+/* ================= help ================= */
+$('helpBtn').onclick=()=>$('helpOverlay').classList.add('on');
+$('helpClose').onclick=()=>$('helpOverlay').classList.remove('on');
+$('helpOverlay').addEventListener('click',e=>{if(e.target.id==='helpOverlay')e.target.classList.remove('on');});
+
+/* ================= PWA ================= */
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;$('installBtn').style.display='inline-flex';});
+$('installBtn').onclick=async()=>{if(!deferredPrompt)return;deferredPrompt.prompt();const r=await deferredPrompt.userChoice;if(r.outcome==='accepted')$('installBtn').style.display='none';deferredPrompt=null;};
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(err=>console.warn('SW registration failed:',err)));
+}
+
+function resumeBanner(){
+  const b=books.find(x=>x.id===currentId);
+  if(b){$('pTitle').textContent=b.title;$('pAuthor').textContent=b.author||'Unknown author';$('player').classList.add('on');}
+}
+
+/* ================= playlist queue ================= */
+let queue=[];
+function visibleIds(){return books.filter(b=>!b.hidden&&(!b.adult||showAdult())).map(b=>b.id);}
+function queueStep(d){
+  if(!queue.length)queue=visibleIds();
+  if(!queue.length)return toast('⚠ Queue is empty');
+  const i=queue.indexOf(currentId);
+  const nid=queue[(i+d+queue.length)%queue.length]||queue[0];
+  if(nid)playBook(nid);
+}
+$('nextBtn').onclick=()=>queueStep(1);
+$('prevBtn').onclick=()=>queueStep(-1);
+
+/* ================= universal viewer (images / PDFs / docs) ================= */
+function showStage(el){
+  $('audio').style.display='none';
+  const st=$('mediaStage');st.innerHTML='';st.appendChild(el);st.style.display='flex';
+  $('mediaWrap').classList.add('on');
+}
+function hideStage(){const st=$('mediaStage');st.style.display='none';st.innerHTML='';}
+async function viewMaterial(id){
+  const b=books.find(x=>x.id===id);if(!b)return;
+  if(b.adult&&!showAdult())return toast('🔒 18+ material — it stays hidden until enabled in 📊 Stats → Account');
+  let blob;try{blob=await getBlob('material-'+id);}catch(_){blob=null;}
+  if(!blob)return toast('⚠ Material missing — re-add via ✎');
+  const url=URL.createObjectURL(blob);
+  if(blob.type.startsWith('image')){
+    const img=new Image();img.src=url;img.alt=b.title;showStage(img);
+  }else if(blob.type==='application/pdf'){
+    const f=document.createElement('iframe');f.src=url;f.title=b.title;showStage(f);
+  }else{
+    const a=document.createElement('a');a.href=url;a.download=b.matName||b.title+'.bin';a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),5000);
+    toast('⬇ File downloaded (no in-app preview for this type)');
+  }
+}
+// route the existing card button through the universal viewer
+openMaterial=id=>viewMaterial(id);
+
+/* ================= import from link / cloud storage ================= */
+function convertLink(u){
+  try{
+    const url=new URL(u);
+    let m=u.match(/drive\.google\.com\/file\/d\/([^/]+)/)||u.match(/docs\.google\.com\/(?:document|presentation|spreadsheets)\/d\/([^/]+)/);
+    if(m)return 'https://drive.google.com/uc?export=download&id='+m[1];
+    if(/drive\.google\.com\/open/.test(url.pathname+url.search)&&url.searchParams.get('id'))
+      return 'https://drive.google.com/uc?export=download&id='+url.searchParams.get('id');
+    if(/dropbox\.com/.test(u)){url.searchParams.set('dl','1');return url.toString();}
+    if(/1drv\.ms|onedrive\.live\.com/.test(u)){url.searchParams.set('download','1');return url.toString();}
+    return u;
+  }catch(_){return u;}
+}
+function updateLink(){
+  const v=$('linkUrl').value.trim();
+  const c=v?convertLink(v):'';
+  $('linkConverted').textContent=c&&c!==v?'⇒ direct download: '+c:'';
+}
+$('importLinkBtn').onclick=()=>{$('linkOverlay').classList.add('on');updateLink();};
+$('linkCancel').onclick=()=>$('linkOverlay').classList.remove('on');
+$('linkOverlay').addEventListener('click',e=>{if(e.target.id==='linkOverlay')e.target.classList.remove('on');});
+$('linkUrl').oninput=updateLink;
+$('linkOpen').onclick=()=>{const c=convertLink($('linkUrl').value.trim());if(c)window.open(c,'_blank','noopener');else toast('⚠ Paste a link first');};
+async function importBlob(blob,name,title,cat){
+  const b={id:crypto.randomUUID?crypto.randomUUID():'b'+Date.now()+Math.random(),title,author:'',created:Date.now(),duration:0,progress:0,done:false,audioName:'',bookmarks:[],listened:0,hasCover:false,hasScript:false,notes:'',cat:cat||'',type:'audio',adult:false,hasMat:false};
+  b.adult=b.cat==='Erotic (18+)';
+  if(b.adult&&!session.user.adult){toast('🔒 18+ category needs an 18-confirmed account');return null;}
+  if(blob.type.startsWith('video')){b.type='vscript';b.videoName=name;b.duration=await readDuration(blob);await putBlob('video-'+b.id,blob);}
+  else if(blob.type.startsWith('audio')){b.audioName=name;b.duration=await readDuration(blob);await putBlob(b.id,blob);}
+  else{b.hasMat=true;b.matName=name;await putBlob('material-'+b.id,blob);}
+  books.push(b);save();render();return b;
+}
+$('linkFetch').onclick=async()=>{
+  const raw=$('linkUrl').value.trim();
+  if(!raw)return toast('⚠ Paste a link first');
+  const url=convertLink(raw);
+  const title=$('linkTitle').value.trim()||'Imported '+new Date().toISOString().slice(0,10);
+  toast('⏳ Downloading from link…');
+  try{
+    const res=await fetch(url);
+    if(!res.ok)throw new Error('http '+res.status);
+    const blob=await res.blob();
+    const b=await importBlob(blob,raw.split('/').pop()||raw,title,$('fCat2').value||'');
+    if(b){$('linkOverlay').classList.remove('on');toast('✅ Imported: '+title);}
+  }catch(_){
+    toast('⚠ This host blocks direct downloads (CORS). Use ↗ Open link, download the file there, then attach it locally.');
+  }
+};
+
+/* optional API keys for in-app pickers (stored per account, degrade honestly) */
+/* daily listening activity → streaks & goals */
+const actKey=()=>'bv_activity::'+(session.user?session.user.id:'guest');
+let _actAcc={},_actFlush=0;
+function addListenSec(sec){
+  if(!session.user||!(sec>0))return;
+  const t=new Date().toISOString().slice(0,10);
+  _actAcc[t]=(_actAcc[t]||0)+sec;
+  if(Date.now()-_actFlush>20000)flushAct();
+}
+function flushAct(){
+  if(!Object.keys(_actAcc).length){_actFlush=Date.now();return;}
+  try{const act=JSON.parse(localStorage.getItem(actKey())||'{}');for(const k in _actAcc)act[k]=(act[k]||0)+_actAcc[k];localStorage.setItem(actKey(),JSON.stringify(act));}catch(_){}
+  _actAcc={};_actFlush=Date.now();
+}
+function streakOf(act){
+  let s=0;const d=new Date();
+  if(!act[d.toISOString().slice(0,10)])d.setDate(d.getDate()-1);
+  for(let i=0;i<3650;i++){const k=d.toISOString().slice(0,10);if(act[k]>0){s++;d.setDate(d.getDate()-1);}else break;}
+  return s;
+}
+function getKeys(){const v=session.user?localStorage.getItem('bv_api_keys::'+session.user.id):'';const p=(v||'').split(',').map(s=>s&&s.trim());return{google:p[0]||null,dropbox:p[1]||null};}
+$('saveKeys').onclick=()=>{
+  const v=$('apiKeys').value.trim();
+  if(session.user)localStorage.setItem('bv_api_keys::'+session.user.id,v);
+  $('keysState').textContent=v?'Keys stored on this device — the Google Picker and Dropbox chooser buttons above are now live for YOUR developer app.':'Cleared.';
+};
+
+/* real Google Picker (Drive files) using YOUR client id */
+function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error('load failed'));document.head.appendChild(s);});}
+let gToken=null;
+$('gpickerBtn').onclick=async()=>{
+  const cid=getKeys().google;
+  if(!cid)return toast('⚠ Save your Google Picker client ID first (field above)');
+  try{
+    if(!window.google||!google.accounts)await loadScript('https://accounts.google.com/gsi/client');
+    google.accounts.oauth2.initTokenClient({client_id:cid,scope:'https://www.googleapis.com/auth/drive.readonly',callback:async t=>{
+      if(!t||!t.access_token)return toast('⚠ Google sign-in failed or was cancelled');
+      gToken=t.access_token;
+      if(!google.picker)await loadScript('https://docs.google.com/picker.js');
+      new google.picker.PickerBuilder().addView(google.picker.ViewId.DOCS).setOAuthToken(gToken).setCallback(async data=>{
+        if(data.action!=='picked'||!data.docs||!data.docs.length)return;
+        const d=data.docs[0];
+        try{
+          const res=await fetch('https://www.googleapis.com/drive/v3/files/'+d.id+'?alt=media',{headers:{Authorization:'Bearer '+gToken}});
+          if(!res.ok)throw new Error('http '+res.status);
+          const b=await importBlob(await res.blob(),d.name,d.name,$('fCat2').value||'');
+          if(b){$('linkOverlay').classList.remove('on');toast('✅ Imported from Drive: '+d.name);}
+        }catch(_){toast('⚠ Could not download that file from Drive');}
+      }).build().setVisible(true);
+    }}).requestAccessToken();
+  }catch(_){toast('⚠ Could not load Google Picker (network or client ID issue)');}
+};
+
+/* real Dropbox chooser using YOUR app key */
+$('dbxBtn').onclick=async()=>{
+  const k=getKeys().dropbox;
+  if(!k)return toast('⚠ Save your Dropbox app key first (field above)');
+  try{
+    if(!window.Dropbox)await loadScript('https://www.dropbox.com/static/api/2/dropins.js');
+    Dropbox.choose({linkType:'direct',multiselect:false,success:async files=>{
+      const f=files&&files[0];if(!f)return;
+      try{
+        const res=await fetch(f.link);
+        if(!res.ok)throw new Error('http '+res.status);
+        const b=await importBlob(await res.blob(),f.name,f.name,$('fCat2').value||'');
+        if(b){$('linkOverlay').classList.remove('on');toast('✅ Imported from Dropbox: '+f.name);}
+      }catch(_){toast('⚠ Could not download from that Dropbox link');}
+    }});
+  }catch(_){toast('⚠ Could not load Dropbox chooser (network or app key issue)');}
+};
+
+/* ================= boot: session restore or auth gate ================= */
+renderCats();
+/* OS "Open with Book Vault" (PWA file handling) */
+if('launchQueue' in window){try{window.launchQueue.setConsumer(async lp=>{
+  if(!lp||!lp.files||!lp.files.length)return;
+  try{window._sharedFile=await lp.files[0].getFile();toast('📎 File received — tap ＋ Add book to attach it');}catch(_){}
+});}catch(_){}}
+(function boot(){
+  const sid=localStorage.getItem(LS_SESSION),us=users();
+  if(sid&&us[sid]){login(us[sid]);}
+  else{$('authOverlay').classList.add('on');setAuthMode('login');}
+})();
+</script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092" integrity="sha512-UKNk8GbxkABxKcXYuLkO16EleLGUkcvJWtpSNmExE0Too3ZaFAxTscNWEc1OdAv5/BikHawapSCaiD2XCmp+Bw==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
+</body>
+</html>
